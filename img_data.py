@@ -21,6 +21,9 @@ Instructions:
 6. Preserve multiline cell values as a single value.
 7. If a cell is empty, return an empty string.
 8. Return only valid JSON.
+9. Never copy values from previous rows.
+10. Never repeat rows.
+11. Preserve row order exactly.
 Output format:
 
 {
@@ -30,10 +33,11 @@ Output format:
 """
 
 payload = {
-    "model": "qwen3-vl",
+    "model": "qwen3-vl:latest",
     "prompt": prompt,
     "images": [image_base64],
-    "stream": False
+    "stream": False,
+    #"format":"json"
 }
 
 response = requests.post(
@@ -43,14 +47,25 @@ response = requests.post(
 )
 
 result = response.json()
+print("=" * 50)
+print("FULL RESPONSE:")
+print(result)
+print("=" * 50)
+response_text = result["response"].strip()
+
+if not response_text.startswith("[") and not response_text.startswith("{"):
+    print("Model did not return JSON")
+    print(response_text)
+    exit()
 
 # Convert model response string to JSON
 table_data = json.loads(result["response"])
 
 print("TYPE:", type(table_data))
 print("DATA:", table_data)
-#data_rows = table_data["rows"]
 
+headers = table_data["headers"]
+data_rows = table_data["rows"]
 json_output = []
 
 for row in data_rows:
