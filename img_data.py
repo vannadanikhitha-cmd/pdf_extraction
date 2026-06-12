@@ -2,7 +2,7 @@ import requests
 import base64
 import json
 
-IMAGE_PATH = r"C:\Users\Hello\Desktop\pdf_extraction\page_1.png"
+IMAGE_PATH = r"C:\Users\Hello\Desktop\pdf_extraction\page_2.png"
 
 OLLAMA_URL = "http://192.168.0.200:11434/api/generate"
 
@@ -21,9 +21,6 @@ Instructions:
 6. Preserve multiline cell values as a single value.
 7. If a cell is empty, return an empty string.
 8. Return only valid JSON.
-9. Never copy values from previous rows.
-10. Never repeat rows.
-11. Preserve row order exactly.
 Output format:
 
 {
@@ -33,11 +30,10 @@ Output format:
 """
 
 payload = {
-    "model": "qwen3-vl:latest",
+    "model": "qwen3-vl",
     "prompt": prompt,
     "images": [image_base64],
-    "stream": False,
-    #"format":"json"
+    "stream": False
 }
 
 response = requests.post(
@@ -47,42 +43,16 @@ response = requests.post(
 )
 
 result = response.json()
-print("=" * 50)
-print("FULL RESPONSE:")
-print(result)
-print("=" * 50)
-response_text = result["response"].strip()
-
-if not response_text.startswith("[") and not response_text.startswith("{"):
-    print("Model did not return JSON")
-    print(response_text)
-    exit()
 
 # Convert model response string to JSON
 table_data = json.loads(result["response"])
 
 print("TYPE:", type(table_data))
 print("DATA:", table_data)
-
 headers = table_data["headers"]
 data_rows = table_data["rows"]
-json_output = []
 
-for row in data_rows:
-
-    record = {}
-
-    for i in range(len(headers)):
-
-        header = headers[i]
-
-        if i < len(row):
-            record[header] = row[i]
-        else:
-            record[header] = ""
-
-    json_output.append(record)
-
+json_output = data_rows
 # Save final JSON
 with open("table_output.json", "w", encoding="utf-8") as f:
 
